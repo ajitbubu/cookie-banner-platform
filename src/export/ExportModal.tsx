@@ -19,6 +19,17 @@ export function ExportModal({ banner, onClose }: { banner: BannerRecord; onClose
     return `<!-- In <head> -->\n${head}\n\n<!-- Top of <body> -->\n${body}`;
   }, [tab, banner]);
 
+  function download() {
+    const ext = tab === "json" ? "json" : "html";
+    const blob = new Blob([content], { type: tab === "json" ? "application/json" : "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${banner.name.replace(/\s+/g, "-").toLowerCase() || "banner"}.${tab === "json" ? "config.json" : ext}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   async function copy() {
     try {
       await navigator.clipboard.writeText(content);
@@ -72,12 +83,20 @@ export function ExportModal({ banner, onClose }: { banner: BannerRecord; onClose
           <span className="text-xs text-gray-500">
             Place the snippet in your site's &lt;head&gt;, above your GTM tag.
           </span>
-          <button
-            onClick={copy}
-            className="h-9 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white hover:brightness-95"
-          >
-            {copied ? "Copied ✓" : "Copy"}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={download}
+              className="h-9 rounded-md border border-gray-300 px-4 text-sm font-semibold hover:bg-gray-50"
+            >
+              Download
+            </button>
+            <button
+              onClick={copy}
+              className="h-9 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white hover:brightness-95"
+            >
+              {copied ? "Copied ✓" : "Copy"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
