@@ -35,29 +35,34 @@ npm run dev      # http://localhost:5173
 ## SDK dependency
 
 The builder consumes the SDK for both its TypeScript types (form typing) and the preview
-bundle. Today it uses a local sibling checkout:
+bundle. It installs the SDK straight from GitHub:
 
 ```json
-"cookie-banner-sdk": "file:../cookie-banner-sdk"
+"cookie-banner-sdk": "git+https://github.com/ajitbubu/cookie-sdk.git"
 ```
 
-So local dev needs `../cookie-banner-sdk` checked out and built (`npm run build` there).
+The SDK repo commits its `dist/` (and `files: ["dist"]` includes it), so a plain
+`npm install` gets the prebuilt bundle + types — **no local sibling, no build step,
+no npm login.** A fresh clone of this repo builds on its own.
 
-**Before CI / deploy:** the `file:` dependency won't resolve on a CI runner (the SDK is a
-separate repo). Switch it to a published package or a git URL once the SDK is available:
+**CI / HTTPS note:** npm canonicalizes the lockfile entry to `git+ssh://git@github.com/...`
+(a known npm quirk for github URLs). On a dev box with GitHub SSH configured this is
+transparent. On a pure-HTTPS CI runner (no SSH key), add one line before `npm ci`:
 
-- npm (preferred): publish the SDK under a scoped name you own, e.g.
-  `@ajitbubu/cookie-banner-sdk`, then `"@ajitbubu/cookie-banner-sdk": "^x.y.z"`.
-  (The bare name `cookie-banner-sdk` is already taken on npm.)
-- git: `"cookie-banner-sdk": "github:ajitbubu/cookie-sdk#<tag>"` (the SDK repo commits
-  its `dist/`, so a git install works without a build step) — requires the latest SDK
-  commits (positioning, theme vars, type exports) to be pushed first.
+```bash
+git config --global url."https://github.com/".insteadOf "git@github.com:"
+```
 
-Then add a CI workflow (typecheck + test + build) and deploy the static `dist/` to
-Vercel / Netlify / GitHub Pages.
+(cookie-sdk is public, so HTTPS clones anonymously.) To pin a specific SDK version, append
+`#<tag-or-sha>` to the URL.
+
+When the SDK is eventually published to npm (under a scoped name like
+`@ajitbubu/cookie-banner-sdk` — the bare name is taken), switch the dependency to the
+semver range and drop the git URL.
 
 ## Status
 
 Built: editor shell, all panels (Theme, Text, Categories, GTM, Positioning, Presets),
-live preview, export, multi-banner management, versioned store. Not yet: CI + deploy
-(blocked on the SDK dependency above), full a11y audit, AI-generated mockups.
+live preview, export, multi-banner management, versioned store. SDK sourced from GitHub
+(builds from a clean clone). Not yet: CI + static deploy, full a11y audit, AI mockups,
+deferred code-review polish (returning-preview defaults, NaN-guard, live-update perf).
