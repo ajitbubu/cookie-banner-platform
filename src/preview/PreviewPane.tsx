@@ -8,38 +8,26 @@ const WIDTHS: Record<Device, number> = { desktop: 1280, tablet: 768, mobile: 375
 
 export function PreviewPane({ config }: { config: Partial<CookieConsentConfig> }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const readyRef = useRef(false);
   const [device, setDevice] = useState<Device>("desktop");
   const [state, setState] = useState<State>("banner");
+  // `ready` is STATE (not a ref) so flipping it re-runs the post effect, and we
+  // key it off the iframe's load event — which fires only after preview.html's
+  // module has executed and attached its message listener. This avoids both the
+  // dropped-edit race (debounce effect bailing while not-ready and never re-firing)
+  // and the missed cc-preview-ready race (load is the authoritative ready signal).
+  const [ready, setReady] = useState(false);
 
-  // Wait for the iframe to report ready, then (re)post on every config/state change.
+  // Re-key the iframe-ready flag if the iframe element is ever remounted.
   useEffect(() => {
-    function onMsg(e: MessageEvent) {
-      if (e.origin !== window.location.origin) return;
-      if (e.data?.type === "cc-preview-ready") {
-        readyRef.current = true;
-        post();
-      }
-    }
-    window.addEventListener("message", onMsg);
-    return () => window.removeEventListener("message", onMsg);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  function post() {
-    iframeRef.current?.contentWindow?.postMessage(
-      { type: "cc-config", config, state },
-      window.location.origin,
-    );
-  }
-
-  // Debounced re-post on config/state change (eng-review: ~150ms debounce).
-  useEffect(() => {
-    if (!readyRef.current) return;
-    const t = setTimeout(post, 150);
+    if (!ready) return;
+    const t = setTimeout(() => {
+      iframeRef.current?.contentWindow?.postMessage(
+        { type: "cc-config", config, state },
+        window.location.origin,
+      );
+    }, 150);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [config, state]);
+  }, [ready, config, state]);
 
   return (
     <div className="flex h-full flex-col bg-gray-50">
@@ -67,6 +55,7 @@ export function PreviewPane({ config }: { config: Partial<CookieConsentConfig> }
           ref={iframeRef}
           src="/preview.html"
           title="Live preview"
+          onLoad={() => setReady(true)}
           className="h-full rounded-lg border border-gray-200 bg-white shadow-sm transition-all"
           style={{ width: WIDTHS[device], maxWidth: "100%" }}
         />

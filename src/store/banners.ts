@@ -104,7 +104,9 @@ export function parseImportedBanner(json: string): BannerRecord | null {
   const r = parsed as Partial<BannerRecord>;
   if (typeof r.config !== "object" || r.config === null) return null;
   return {
-    id: typeof r.id === "string" ? r.id : crypto.randomUUID(),
+    // Always mint a fresh id — importing a previously-exported banner must not
+    // collide with the original (duplicate ids break selection + React keys).
+    id: crypto.randomUUID(),
     name: typeof r.name === "string" ? r.name : "Imported banner",
     updatedAt: new Date().toISOString(),
     gtmContainerId: typeof r.gtmContainerId === "string" ? r.gtmContainerId : undefined,

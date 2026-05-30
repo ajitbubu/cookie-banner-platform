@@ -41,4 +41,12 @@ describe("banner store", () => {
     expect(rec).not.toBeNull();
     expect(rec!.name).toBe("Imported");
   });
+
+  it("parseImportedBanner always mints a fresh id (no collision on re-import)", () => {
+    const json = JSON.stringify({ id: "fixed-id", name: "A", config: { cookieName: "x" } });
+    const a = parseImportedBanner(json)!;
+    const b = parseImportedBanner(json)!;
+    expect(a.id).not.toBe("fixed-id");
+    expect(a.id).not.toBe(b.id);
+  });
 });

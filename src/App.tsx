@@ -24,56 +24,53 @@ export default function App() {
   const [banners, setBanners] = useState<BannerRecord[]>(() => loadBanners());
   const [activeId, setActiveId] = useState<string | null>(() => banners[0]?.id ?? null);
   const [section, setSection] = useState<Section>("Theme");
-  const [dirty, setDirty] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const active = useMemo(() => banners.find((b) => b.id === activeId) ?? null, [banners, activeId]);
 
-  function persist(next: BannerRecord[]) {
-    setBanners(next);
-    saveBanners(next);
+  // Autosave model: every change writes through to localStorage. Functional
+  // updates avoid stale-closure clobbering (e.g. async import landing after an
+  // edit). There is no separate "dirty"/Save step — local builder, nothing to lose.
+  function commit(updater: (prev: BannerRecord[]) => BannerRecord[]) {
+    setBanners((prev) => {
+      const next = updater(prev);
+      saveBanners(next);
+      return next;
+    });
   }
 
   function createBanner() {
     const b = newBanner(`Banner ${banners.length + 1}`);
-    persist([...banners, b]);
+    commit((prev) => [...prev, b]);
     setActiveId(b.id);
-    setDirty(false);
   }
 
   function updateConfig(patch: Partial<CookieConsentConfig>) {
-    if (!active) return;
-    const next = banners.map((b) =>
-      b.id === active.id
-        ? { ...b, config: { ...b.config, ...patch }, updatedAt: new Date().toISOString() }
-        : b,
+    if (!activeId) return;
+    commit((prev) =>
+      prev.map((b) =>
+        b.id === activeId
+          ? { ...b, config: { ...b.config, ...patch }, updatedAt: new Date().toISOString() }
+          : b,
+      ),
     );
-    setBanners(next);
-    setDirty(true);
   }
 
   function updateMeta(patch: Partial<BannerRecord>) {
-    if (!active) return;
-    setBanners(banners.map((b) => (b.id === active.id ? { ...b, ...patch } : b)));
-    setDirty(true);
-  }
-
-  function save() {
-    saveBanners(banners);
-    setDirty(false);
+    if (!activeId) return;
+    commit((prev) => prev.map((b) => (b.id === activeId ? { ...b, ...patch } : b)));
   }
 
   function renameActive(name: string) {
-    if (!active) return;
-    persist(banners.map((b) => (b.id === active.id ? { ...b, name } : b)));
+    if (!activeId) return;
+    commit((prev) => prev.map((b) => (b.id === activeId ? { ...b, name } : b)));
   }
 
   function deleteBanner(id: string) {
-    const next = banners.filter((b) => b.id !== id);
-    persist(next);
-    if (activeId === id) setActiveId(next[0]?.id ?? null);
+    commit((prev) => prev.filter((b) => b.id !== id));
+    setActiveId((cur) => (cur === id ? (banners.find((b) => b.id !== id)?.id ?? null) : cur));
   }
 
   function importBanner(file: File) {
@@ -85,7 +82,7 @@ export default function App() {
         setImportError("Invalid banner file — expected JSON with a config.");
         return;
       }
-      persist([...banners, rec]);
+      commit((prev) => [...prev, rec]); // functional → no stale-closure clobber
       setActiveId(rec.id);
     };
     reader.onerror = () => setImportError("Could not read the file.");
@@ -112,19 +109,10 @@ export default function App() {
             />
           )}
         </div>
-        <div className="flex items-center gap-2">
-          {isUsingMemory() && (
-            <span className="text-xs text-amber-600">Saved this session only</span>
-          )}
-          <button
-            onClick={save}
-            className="relative h-9 rounded-md border border-gray-300 px-3.5 text-sm font-semibold hover:bg-gray-50"
-          >
-            Save
-            {dirty && (
-              <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-blue-600" />
-            )}
-          </button>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-gray-400">
+            {isUsingMemory() ? "Saved this session only" : "All changes saved"}
+          </span>
           <button
             onClick={() => setExportOpen(true)}
             className="h-9 rounded-md bg-blue-600 px-3.5 text-sm font-semibold text-white hover:brightness-95"
@@ -153,7 +141,8 @@ export default function App() {
               <button
                 onClick={() => deleteBanner(b.id)}
                 aria-label={`Delete ${b.name}`}
-                className="ml-1 rounded px-1 text-gray-400 opacity-0 hover:text-red-600 group-hover:opacity-100"
+                title={`Delete ${b.name}`}
+                className="ml-1 rounded px-1 text-gray-300 hover:text-red-600 focus-visible:text-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"
               >
                 ✕
               </button>
