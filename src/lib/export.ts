@@ -1,9 +1,9 @@
-import type { CookieConsentConfig } from "cookie-banner-sdk";
+import type { CookieConsentConfig } from "@ajitbubu/cookie-banner-sdk";
 
 // CDN base for the published SDK. The package name `cookie-banner-sdk` is taken
 // on npm; publish under a scoped name and update this constant. Until then the
 // snippets are copy-ready but the URLs 404 until the package is published.
-export const SDK_CDN = "https://cdn.jsdelivr.net/npm/@ajitbubu/cookie-banner-sdk@latest/dist";
+export const SDK_CDN = "https://cdn.jsdelivr.net/npm/@ajitbubu/cookie-banner-sdk@0.1.0/dist";
 
 /** Strip non-serializable fields (functions like onConsent) and stringify. */
 export function toConfigJson(config: Partial<CookieConsentConfig>): string {

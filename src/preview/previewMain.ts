@@ -1,7 +1,7 @@
 // Runs INSIDE the preview iframe. Receives a config via postMessage and renders
 // the real SDK banner. Resets consent before each init so the banner always shows
 // (eng-review TE2: destroy -> clear consent -> init). Verifies message origin.
-import { init, type CookieConsentInstance, type CookieConsentConfig } from "cookie-banner-sdk";
+import { init, type CookieConsentInstance, type CookieConsentConfig } from "@ajitbubu/cookie-banner-sdk";
 
 type Msg = { type: "cc-config"; config: Partial<CookieConsentConfig>; state?: "banner" | "returning" };
 

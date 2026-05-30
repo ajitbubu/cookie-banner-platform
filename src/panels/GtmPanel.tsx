@@ -1,4 +1,4 @@
-import type { CookieConsentConfig } from "cookie-banner-sdk";
+import type { CookieConsentConfig } from "@ajitbubu/cookie-banner-sdk";
 import { PanelHeader, Card, Field, TextInput, Toggle } from "./ui";
 
 export function GtmPanel({

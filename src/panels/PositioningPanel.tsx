@@ -1,4 +1,4 @@
-import type { CookieConsentConfig, BannerPosition, ButtonPosition } from "cookie-banner-sdk";
+import type { CookieConsentConfig, BannerPosition, ButtonPosition } from "@ajitbubu/cookie-banner-sdk";
 import { PanelHeader, Card, Field, Segmented } from "./ui";
 
 export function PositioningPanel({

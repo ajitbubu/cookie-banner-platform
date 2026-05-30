@@ -1,4 +1,4 @@
-import type { CookieConsentConfig } from "cookie-banner-sdk";
+import type { CookieConsentConfig } from "@ajitbubu/cookie-banner-sdk";
 import { checkContrast } from "../lib/contrast";
 
 type Theme = Record<string, string>;

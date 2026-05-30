@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { CookieConsentConfig } from "cookie-banner-sdk";
+import type { CookieConsentConfig } from "@ajitbubu/cookie-banner-sdk";
 
 type Device = "desktop" | "tablet" | "mobile";
 type State = "banner" | "returning";

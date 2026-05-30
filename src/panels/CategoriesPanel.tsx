@@ -1,4 +1,4 @@
-import type { CookieConsentConfig, CategoryConfig, CookieDef, CategoryKey } from "cookie-banner-sdk";
+import type { CookieConsentConfig, CategoryConfig, CookieDef, CategoryKey } from "@ajitbubu/cookie-banner-sdk";
 import { PanelHeader, Toggle } from "./ui";
 
 const ORDER: { key: CategoryKey; name: string }[] = [

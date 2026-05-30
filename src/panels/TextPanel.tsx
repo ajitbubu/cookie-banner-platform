@@ -1,4 +1,4 @@
-import type { CookieConsentConfig, Labels } from "cookie-banner-sdk";
+import type { CookieConsentConfig, Labels } from "@ajitbubu/cookie-banner-sdk";
 import { PanelHeader, Card, Field, TextInput } from "./ui";
 
 const FIELDS: { key: keyof Labels; label: string; placeholder: string }[] = [

@@ -1,4 +1,4 @@
-import type { CookieConsentConfig } from "cookie-banner-sdk";
+import type { CookieConsentConfig } from "@ajitbubu/cookie-banner-sdk";
 
 // A saved banner = builder metadata + the SDK config it produces.
 export interface BannerRecord {
