@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      html, body { margin: 0; height: 100%; }
+      body { background: #fff; font-family: system-ui, sans-serif; }
+      /* Mock page content so the banner has a realistic backdrop. */
+      .mock { padding: 24px; }
+      .mock .bar { height: 10px; background: #eceef1; border-radius: 5px; margin: 14px 0; }
+      .mock .bar.s { width: 40%; } .mock .bar.m { width: 70%; }
+      #cc-error { display: none; position: fixed; inset: 0; align-items: center; justify-content: center;
+        color: #6b7280; font-size: 13px; text-align: center; padding: 24px; }
+    </style>
+  </head>
+  <body>
+    <div class="mock">
+      <div class="bar m"></div><div class="bar s"></div><div class="bar m"></div>
+      <div class="bar s"></div><div class="bar m"></div><div class="bar s"></div>
+    </div>
+    <div id="cc-error">Preview unavailable — the SDK bundle failed to load.</div>
+    <script type="module" src="/src/preview/previewMain.ts"></script>
+  </body>
+</html>
