@@ -8,6 +8,12 @@ import {
   type BannerRecord,
 } from "./store/banners";
 import { ThemePanel } from "./panels/ThemePanel";
+import { TextPanel } from "./panels/TextPanel";
+import { CategoriesPanel } from "./panels/CategoriesPanel";
+import { GtmPanel } from "./panels/GtmPanel";
+import { PositioningPanel } from "./panels/PositioningPanel";
+import { PresetsPanel } from "./panels/PresetsPanel";
+import { ExportModal } from "./export/ExportModal";
 import { PreviewPane } from "./preview/PreviewPane";
 
 const SECTIONS = ["Theme", "Text & Labels", "Categories & Cookies", "GTM", "Positioning", "Presets"] as const;
@@ -18,6 +24,7 @@ export default function App() {
   const [activeId, setActiveId] = useState<string | null>(() => banners[0]?.id ?? null);
   const [section, setSection] = useState<Section>("Theme");
   const [dirty, setDirty] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const active = useMemo(() => banners.find((b) => b.id === activeId) ?? null, [banners, activeId]);
 
@@ -41,6 +48,12 @@ export default function App() {
         : b,
     );
     setBanners(next);
+    setDirty(true);
+  }
+
+  function updateMeta(patch: Partial<BannerRecord>) {
+    if (!active) return;
+    setBanners(banners.map((b) => (b.id === active.id ? { ...b, ...patch } : b)));
     setDirty(true);
   }
 
@@ -72,7 +85,10 @@ export default function App() {
               <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-blue-600" />
             )}
           </button>
-          <button className="h-9 rounded-md bg-blue-600 px-3.5 text-sm font-semibold text-white hover:brightness-95">
+          <button
+            onClick={() => setExportOpen(true)}
+            className="h-9 rounded-md bg-blue-600 px-3.5 text-sm font-semibold text-white hover:brightness-95"
+          >
             Export
           </button>
         </div>
@@ -120,10 +136,24 @@ export default function App() {
 
         {/* Center: active panel form */}
         <main className="flex-1 overflow-auto bg-gray-50 px-6 py-5">
-          {active && section === "Theme" ? (
-            <ThemePanel config={active.config} onChange={updateConfig} />
-          ) : (
-            <Placeholder section={section} />
+          {active && (
+            <>
+              {section === "Theme" && <ThemePanel config={active.config} onChange={updateConfig} />}
+              {section === "Text & Labels" && <TextPanel config={active.config} onChange={updateConfig} />}
+              {section === "Categories & Cookies" && (
+                <CategoriesPanel config={active.config} onChange={updateConfig} />
+              )}
+              {section === "GTM" && (
+                <GtmPanel
+                  config={active.config}
+                  gtmContainerId={active.gtmContainerId}
+                  onChange={updateConfig}
+                  onMeta={updateMeta}
+                />
+              )}
+              {section === "Positioning" && <PositioningPanel config={active.config} onChange={updateConfig} />}
+              {section === "Presets" && <PresetsPanel config={active.config} onChange={updateConfig} />}
+            </>
           )}
         </main>
 
@@ -132,6 +162,8 @@ export default function App() {
           {active && <PreviewPane config={active.config} />}
         </aside>
       </div>
+
+      {exportOpen && active && <ExportModal banner={active} onClose={() => setExportOpen(false)} />}
     </div>
   );
 }
@@ -157,11 +189,3 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
   );
 }
 
-function Placeholder({ section }: { section: Section }) {
-  return (
-    <div>
-      <h2 className="text-lg font-semibold">{section}</h2>
-      <p className="mt-1 text-sm text-gray-500">This panel is coming next.</p>
-    </div>
-  );
-}
