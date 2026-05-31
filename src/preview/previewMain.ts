@@ -6,6 +6,8 @@ import { init, type CookieConsentInstance, type CookieConsentConfig } from "@aji
 type Msg = { type: "cc-config"; config: Partial<CookieConsentConfig>; state?: "banner" | "returning" };
 
 let instance: CookieConsentInstance | null = null;
+let prevName: string | null = null;
+let renderSeq = 0;
 const ORIGIN = window.location.origin;
 
 function clearCookie(name: string) {
@@ -19,8 +21,14 @@ function render(config: Partial<CookieConsentConfig>, state: "banner" | "returni
   } catch {
     /* ignore */
   }
-  const cookieName = config.cookieName || "cc_consent";
-  clearCookie(cookieName);
+  // Use a UNIQUE cookie name per render. This isolates each preview from prior
+  // state in BOTH the cookie AND the SDK's in-memory fallback store (which a
+  // plain clearCookie can't reach) — code-review #8. Clear the previous one to
+  // avoid cookie buildup in the iframe.
+  if (prevName) clearCookie(prevName);
+  const cookieName = `${config.cookieName || "cc_consent"}__preview${++renderSeq}`;
+  prevName = cookieName;
+  const renderConfig: Partial<CookieConsentConfig> = { ...config, cookieName };
   // Reset the SDK's double-init guard so re-init re-renders.
   (window as unknown as Record<string, unknown>).__cookieConsentInitialized = undefined;
 
@@ -44,7 +52,7 @@ function render(config: Partial<CookieConsentConfig>, state: "banner" | "returni
   }
 
   try {
-    instance = init(config);
+    instance = init(renderConfig);
     if (errEl) errEl.style.display = "none";
   } catch {
     if (errEl) errEl.style.display = "flex";

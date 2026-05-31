@@ -26,6 +26,20 @@ describe("banner store", () => {
     expect(loadBanners()).toEqual([]);
   });
 
+  it("drops malformed records but keeps valid ones (code-review #7)", () => {
+    const good = newBanner("Good");
+    localStorage.setItem(
+      "cc-builder-banners",
+      JSON.stringify({
+        schemaVersion: 1,
+        banners: [good, { id: "x", name: "no-config" }, null, { name: "no-id", config: {} }],
+      }),
+    );
+    const loaded = loadBanners();
+    expect(loaded).toHaveLength(1);
+    expect(loaded[0].name).toBe("Good");
+  });
+
   it("newBanner forces necessary locked + enabled", () => {
     const b = newBanner("x");
     expect(b.config.categories!.necessary).toMatchObject({ enabled: true, locked: true });

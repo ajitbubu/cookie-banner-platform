@@ -59,7 +59,23 @@ export function loadBanners(): BannerRecord[] {
     console.warn(`[builder] unknown store schemaVersion ${env.schemaVersion} — resetting.`);
     return [];
   }
-  return Array.isArray(env.banners) ? env.banners : [];
+  if (!Array.isArray(env.banners)) return [];
+  // Validate each record — a corrupt/old entry missing id/name/config would crash
+  // the panels or preview downstream (code-review #7). Drop bad ones, keep the rest.
+  const valid = env.banners.filter(
+    (b): b is BannerRecord =>
+      !!b &&
+      typeof (b as BannerRecord).id === "string" &&
+      typeof (b as BannerRecord).name === "string" &&
+      typeof (b as BannerRecord).config === "object" &&
+      (b as BannerRecord).config !== null,
+  );
+  if (valid.length !== env.banners.length) {
+    console.warn(
+      `[builder] dropped ${env.banners.length - valid.length} malformed banner record(s).`,
+    );
+  }
+  return valid;
 }
 
 /** Persist banners. Falls back to in-memory (this session only) if blocked. */

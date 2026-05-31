@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { BannerRecord } from "../store/banners";
 import { toConfigJson, toInitSnippet, toGtmHeadSnippet } from "../lib/export";
 
@@ -7,6 +7,9 @@ type Tab = "json" | "init" | "gtm";
 export function ExportModal({ banner, onClose }: { banner: BannerRecord; onClose: () => void }) {
   const [tab, setTab] = useState<Tab>("init");
   const [copied, setCopied] = useState(false);
+  // Only close on a click that BOTH started and ended on the backdrop. A drag-select
+  // inside the textarea that releases over the backdrop must not close it (#10).
+  const downOnBackdrop = useRef(false);
 
   const content = useMemo(() => {
     if (tab === "json") return toConfigJson(banner.config);
@@ -51,7 +54,8 @@ export function ExportModal({ banner, onClose }: { banner: BannerRecord; onClose
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+      onMouseDown={(e) => { downOnBackdrop.current = e.target === e.currentTarget; }}
+      onClick={(e) => { if (downOnBackdrop.current && e.target === e.currentTarget) onClose(); }}
     >
       <div className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-3.5">
