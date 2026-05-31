@@ -14,7 +14,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ajitbubu/cookie-banner-sdk": "git+https://github.com/ajitbubu/cookie-sdk.git",
+    "@ajitbubu/cookie-banner-sdk": "github:ajitbubu/cookie-sdk",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

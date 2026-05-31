@@ -6,8 +6,6 @@ import { init, type CookieConsentInstance, type CookieConsentConfig } from "@aji
 type Msg = { type: "cc-config"; config: Partial<CookieConsentConfig>; state?: "banner" | "returning" };
 
 let instance: CookieConsentInstance | null = null;
-let prevName: string | null = null;
-let renderSeq = 0;
 const ORIGIN = window.location.origin;
 
 function clearCookie(name: string) {
@@ -16,24 +14,12 @@ function clearCookie(name: string) {
 
 function render(config: Partial<CookieConsentConfig>, state: "banner" | "returning") {
   const errEl = document.getElementById("cc-error");
-  try {
-    instance?.destroy();
-  } catch {
-    /* ignore */
-  }
-  // Use a UNIQUE cookie name per render. This isolates each preview from prior
-  // state in BOTH the cookie AND the SDK's in-memory fallback store (which a
-  // plain clearCookie can't reach) — code-review #8. Clear the previous one to
-  // avoid cookie buildup in the iframe.
-  if (prevName) clearCookie(prevName);
-  const cookieName = `${config.cookieName || "cc_consent"}__preview${++renderSeq}`;
-  prevName = cookieName;
-  const renderConfig: Partial<CookieConsentConfig> = { ...config, cookieName };
-  // Reset the SDK's double-init guard so re-init re-renders.
-  (window as unknown as Record<string, unknown>).__cookieConsentInitialized = undefined;
-
+  const cookieName = config.cookieName || "cc_consent";
+  // Set the cookie to match the requested state, THEN init/update — the SDK reads
+  // it to decide banner-vs-button. Clearing/seeding fresh each render keeps the
+  // preview deterministic (code-review #8: no stale state bleeds across renders).
+  clearCookie(cookieName);
   if (state === "returning") {
-    // Seed a prior-consent cookie so the SDK shows the floating button, not the banner.
     // Reflect the configured default state so "Returning" shows what a real
     // returning visitor's stored choices would look like (code-review #4).
     const cats = config.categories;
@@ -52,7 +38,10 @@ function render(config: Partial<CookieConsentConfig>, state: "banner" | "returni
   }
 
   try {
-    instance = init(renderConfig);
+    // init once, then update() in place — no full destroy/init per keystroke, so
+    // the preview re-themes/rebuilds without flicker or focus loss (#9).
+    if (!instance) instance = init(config);
+    else instance.update(config);
     if (errEl) errEl.style.display = "none";
   } catch {
     if (errEl) errEl.style.display = "flex";
