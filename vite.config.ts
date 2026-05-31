@@ -2,7 +2,11 @@ import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
-export default defineConfig({
+// base: served from a subpath on GitHub Pages (https://<user>.github.io/cookie-banner-platform/)
+// in production, but root ("/") in dev so `npm run dev` stays at localhost:5173/.
+// The preview iframe src uses import.meta.env.BASE_URL so it resolves under either.
+export default defineConfig(({ command }) => ({
+  base: command === "build" ? "/cookie-banner-platform/" : "/",
   plugins: [react(), tailwindcss()],
   build: {
     // Multi-page: the main editor app + the isolated preview iframe document.
@@ -18,4 +22,4 @@ export default defineConfig({
     globals: true,
     include: ["test/**/*.test.{ts,tsx}", "src/**/*.test.{ts,tsx}"],
   },
-});
+}));

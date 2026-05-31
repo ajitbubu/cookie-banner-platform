@@ -16,10 +16,6 @@ export function parseHex(hex: string): [number, number, number] | null {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
-export function isValidHex(hex: string): boolean {
-  return parseHex(hex) !== null;
-}
-
 function luminance([r, g, b]: [number, number, number]): number {
   return 0.2126 * srgbToLin(r) + 0.7152 * srgbToLin(g) + 0.0722 * srgbToLin(b);
 }

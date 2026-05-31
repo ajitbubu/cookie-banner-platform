@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { contrastRatio, isValidHex, checkContrast } from "../src/lib/contrast";
+import { contrastRatio, checkContrast } from "../src/lib/contrast";
 
 describe("contrast", () => {
   it("black on white is 21:1", () => {
@@ -13,7 +13,7 @@ describe("contrast", () => {
   });
   it("returns null for invalid hex", () => {
     expect(contrastRatio("nope", "#fff")).toBeNull();
-    expect(isValidHex("#12")).toBe(false);
+    expect(contrastRatio("#12", "#fff")).toBeNull();
   });
   it("flags a failing pair (AA needs 4.5:1)", () => {
     const r = checkContrast("#9aa3b2", "#ffffff");

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { CookieConsentConfig } from "@ajitbubu/cookie-banner-sdk";
+import { Segmented } from "../panels/ui";
 
 type Device = "desktop" | "tablet" | "mobile";
 type State = "banner" | "returning";
@@ -32,18 +33,18 @@ export function PreviewPane({ config }: { config: Partial<CookieConsentConfig> }
   return (
     <div className="flex h-full flex-col bg-gray-50">
       <div className="flex items-center justify-center gap-2 border-b border-gray-200 bg-white py-2">
-        <Segmented
+        <Segmented<Device>
           value={device}
-          onChange={(v) => setDevice(v as Device)}
+          onChange={setDevice}
           options={[
             ["desktop", "Desktop"],
             ["tablet", "Tablet"],
             ["mobile", "Mobile"],
           ]}
         />
-        <Segmented
+        <Segmented<State>
           value={state}
-          onChange={(v) => setState(v as State)}
+          onChange={setState}
           options={[
             ["banner", "Banner"],
             ["returning", "Returning"],
@@ -53,7 +54,7 @@ export function PreviewPane({ config }: { config: Partial<CookieConsentConfig> }
       <div className="flex flex-1 items-stretch justify-center overflow-auto p-4">
         <iframe
           ref={iframeRef}
-          src="/preview.html"
+          src={`${import.meta.env.BASE_URL}preview.html`}
           title="Live preview"
           onLoad={() => setReady(true)}
           className="h-full rounded-lg border border-gray-200 bg-white shadow-sm transition-all"
@@ -64,28 +65,3 @@ export function PreviewPane({ config }: { config: Partial<CookieConsentConfig> }
   );
 }
 
-function Segmented({
-  value,
-  onChange,
-  options,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  options: [string, string][];
-}) {
-  return (
-    <div className="flex overflow-hidden rounded-md border border-gray-300">
-      {options.map(([v, label]) => (
-        <button
-          key={v}
-          onClick={() => onChange(v)}
-          className={`px-3 py-1 text-xs ${
-            value === v ? "bg-blue-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50"
-          }`}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
-  );
-}
