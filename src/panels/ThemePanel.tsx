@@ -3,6 +3,14 @@ import { checkContrast } from "../lib/contrast";
 
 type Theme = Record<string, string>;
 
+// Parse a px-ish theme value to a number for the sliders. Non-px values
+// ("1rem", "medium", undefined) fall back to `fallback` instead of NaN, which
+// would make the range input uncontrolled (code-review #5).
+export function pxValue(raw: string | undefined, fallback: number): number {
+  const n = parseInt(raw ?? "", 10);
+  return Number.isNaN(n) ? fallback : n;
+}
+
 // SDK default palette — contrast is checked on EFFECTIVE colors, so unset vars
 // fall back to these defaults (design-review hardening).
 const DEFAULTS: Record<string, string> = {
@@ -74,7 +82,7 @@ export function ThemePanel({
           unit="px"
           min={12}
           max={20}
-          value={parseInt(theme["--cc-font-size"] ?? "14", 10)}
+          value={pxValue(theme["--cc-font-size"], 14)}
           onChange={(n) => setVar("--cc-font-size", `${n}px`)}
         />
         <Slider
@@ -82,7 +90,7 @@ export function ThemePanel({
           unit="px"
           min={0}
           max={20}
-          value={parseInt(theme["--cc-radius"] ?? "10", 10)}
+          value={pxValue(theme["--cc-radius"], 10)}
           onChange={(n) => setVar("--cc-radius", `${n}px`)}
         />
       </div>

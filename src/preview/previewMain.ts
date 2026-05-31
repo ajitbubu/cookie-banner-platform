@@ -26,11 +26,19 @@ function render(config: Partial<CookieConsentConfig>, state: "banner" | "returni
 
   if (state === "returning") {
     // Seed a prior-consent cookie so the SDK shows the floating button, not the banner.
+    // Reflect the configured default state so "Returning" shows what a real
+    // returning visitor's stored choices would look like (code-review #4).
+    const cats = config.categories;
     const rec = {
       schemaVersion: 1,
       version: config.consentVersion ?? 1,
       timestamp: new Date(0).toISOString(),
-      categories: { necessary: true, analytics: false, functional: false, marketing: false },
+      categories: {
+        necessary: true,
+        analytics: cats?.analytics?.enabled ?? false,
+        functional: cats?.functional?.enabled ?? false,
+        marketing: cats?.marketing?.enabled ?? false,
+      },
     };
     document.cookie = `${cookieName}=${encodeURIComponent(JSON.stringify(rec))}; Path=/`;
   }
