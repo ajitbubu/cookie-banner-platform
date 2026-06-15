@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toConfigJson, toInitSnippet, toGtmHeadSnippet } from "../src/lib/export";
+import { toConfigJson, toInitSnippet, toGtmHeadSnippet, toPlatformSnippet } from "../src/lib/export";
 
 const cfg = {
   cookieName: "cc_demo",
@@ -30,5 +30,26 @@ describe("export", () => {
     expect(iGtm).toBeLessThan(iSdk);
     expect(head).toContain("GTM-ABC123");
     expect(body).toContain("GTM-ABC123");
+  });
+
+  it("platform snippet bakes site key + ingest + config and loads the hosted core", () => {
+    const s = toPlatformSnippet(cfg, { siteKey: "site_abc123" });
+    expect(s).toContain("window.__CC_SITE__");
+    expect(s).toContain('"key": "site_abc123"');
+    expect(s).toContain("/ingest");
+    expect(s).toContain("consent-core@stable.js");
+    expect(s).toContain("cc_demo"); // config is baked in
+    expect(s).not.toContain("onConsent"); // function stripped
+  });
+
+  it("platform snippet honors custom bases", () => {
+    const s = toPlatformSnippet(cfg, {
+      siteKey: "k",
+      cdnBase: "https://cdn.acme.io/c",
+      ingestBase: "https://app.acme.io",
+      coreChannel: "v2",
+    });
+    expect(s).toContain("https://cdn.acme.io/c/consent-core@v2.js");
+    expect(s).toContain("https://app.acme.io/ingest");
   });
 });
