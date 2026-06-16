@@ -14,16 +14,17 @@ import { CategoriesPanel } from "./panels/CategoriesPanel";
 import { GtmPanel } from "./panels/GtmPanel";
 import { PositioningPanel } from "./panels/PositioningPanel";
 import { PresetsPanel } from "./panels/PresetsPanel";
+import { TemplatesPanel } from "./panels/TemplatesPanel";
 import { ExportModal } from "./export/ExportModal";
 import { PreviewPane } from "./preview/PreviewPane";
 
-const SECTIONS = ["Theme", "Text & Labels", "Categories & Cookies", "GTM", "Positioning", "Presets"] as const;
+const SECTIONS = ["Templates", "Theme", "Text & Labels", "Categories & Cookies", "GTM", "Positioning", "Presets"] as const;
 type Section = (typeof SECTIONS)[number];
 
 export default function App() {
   const [banners, setBanners] = useState<BannerRecord[]>(() => loadBanners());
   const [activeId, setActiveId] = useState<string | null>(() => banners[0]?.id ?? null);
-  const [section, setSection] = useState<Section>("Theme");
+  const [section, setSection] = useState<Section>("Templates");
   const [exportOpen, setExportOpen] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -195,6 +196,7 @@ export default function App() {
         <main className="flex-1 overflow-auto bg-gray-50 px-6 py-5">
           {active && (
             <>
+              {section === "Templates" && <TemplatesPanel config={active.config} onChange={updateConfig} />}
               {section === "Theme" && <ThemePanel config={active.config} onChange={updateConfig} />}
               {section === "Text & Labels" && <TextPanel config={active.config} onChange={updateConfig} />}
               {section === "Categories & Cookies" && (

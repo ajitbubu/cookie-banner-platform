@@ -5,14 +5,26 @@ import type { CookieConsentConfig } from "@ajitbubu/cookie-banner-sdk";
 // snippets are copy-ready but the URLs 404 until the package is published.
 export const SDK_CDN = "https://cdn.jsdelivr.net/npm/@ajitbubu/cookie-banner-sdk@0.1.0/dist";
 
-/** Strip non-serializable fields (functions like onConsent) and stringify. */
-export function toConfigJson(config: Partial<CookieConsentConfig>): string {
+// Platform (internal-delivery) install. The agency hosts a versioned consent CORE
+// and an ingest endpoint; each client gets a thin stub with its config baked in
+// (decisions T1 hybrid + 1A). Swap these bases for your platform's real domains.
+export const PLATFORM_CDN = "https://cdn.your-platform.example/consent";
+export const PLATFORM_INGEST = "https://app.your-platform.example";
+export const CORE_CHANNEL = "stable";
+
+/** Strip non-serializable fields (functions like onConsent). */
+export function cleanConfig(config: Partial<CookieConsentConfig>): Record<string, unknown> {
   const clean: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(config)) {
     if (typeof v === "function") continue; // onConsent is code-only
     clean[k] = v;
   }
-  return JSON.stringify(clean, null, 2);
+  return clean;
+}
+
+/** Strip non-serializable fields (functions like onConsent) and stringify. */
+export function toConfigJson(config: Partial<CookieConsentConfig>): string {
+  return JSON.stringify(cleanConfig(config), null, 2);
 }
 
 /** Minimal install: main bundle + init(). For sites without GTM. */
@@ -55,6 +67,43 @@ f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=${gtmId}"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>`;
   return { head, body };
+}
+
+export interface PlatformSnippetOpts {
+  siteKey: string; // public per-client key (the platform assigns the real one)
+  cdnBase?: string;
+  ingestBase?: string;
+  coreChannel?: string;
+}
+
+/**
+ * Per-client platform install (internal-delivery model). A thin stub bakes the
+ * client's config + site key + ingest endpoint into `window.__CC_SITE__`, then
+ * loads the hosted, versioned consent CORE which renders the banner and POSTs
+ * consent events to the ingest endpoint. Updating the core centrally patches all
+ * client sites at once.
+ *
+ * Decisions baked in:
+ *   T1  — config/styling baked per client, but consent logic loads from a hosted
+ *         versioned core (`consent-core@<channel>`) so compliance fixes ship fleet-wide.
+ *   2A/3A — buffering/retry/idempotency + origin-checked ingest live in the core,
+ *         not the stub; the stub only declares where to send events.
+ */
+export function toPlatformSnippet(
+  config: Partial<CookieConsentConfig>,
+  opts: PlatformSnippetOpts,
+): string {
+  const cdn = opts.cdnBase ?? PLATFORM_CDN;
+  const ingest = opts.ingestBase ?? PLATFORM_INGEST;
+  const channel = opts.coreChannel ?? CORE_CHANNEL;
+  const site = {
+    key: opts.siteKey,
+    ingest: `${ingest}/ingest`,
+    config: cleanConfig(config),
+  };
+  return `<!-- Consent Monitor — paste in <head>. Core updates are pushed centrally; this stub stays put. -->
+<script>window.__CC_SITE__ = ${indent(JSON.stringify(site, null, 2), 2)};</script>
+<script src="${cdn}/consent-core@${channel}.js" defer></script>`;
 }
 
 function indent(s: string, n: number): string {

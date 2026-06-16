@@ -1,17 +1,18 @@
 import { useMemo, useRef, useState } from "react";
 import type { BannerRecord } from "../store/banners";
-import { toConfigJson, toInitSnippet, toGtmHeadSnippet } from "../lib/export";
+import { toConfigJson, toInitSnippet, toGtmHeadSnippet, toPlatformSnippet } from "../lib/export";
 
-type Tab = "json" | "init" | "gtm";
+type Tab = "platform" | "json" | "init" | "gtm";
 
 export function ExportModal({ banner, onClose }: { banner: BannerRecord; onClose: () => void }) {
-  const [tab, setTab] = useState<Tab>("init");
+  const [tab, setTab] = useState<Tab>("platform");
   const [copied, setCopied] = useState(false);
   // Only close on a click that BOTH started and ended on the backdrop. A drag-select
   // inside the textarea that releases over the backdrop must not close it (#10).
   const downOnBackdrop = useRef(false);
 
   const content = useMemo(() => {
+    if (tab === "platform") return toPlatformSnippet(banner.config, { siteKey: banner.id });
     if (tab === "json") return toConfigJson(banner.config);
     if (tab === "init") return toInitSnippet(banner.config);
     const gtmId = banner.gtmContainerId?.trim();
@@ -46,6 +47,7 @@ export function ExportModal({ banner, onClose }: { banner: BannerRecord; onClose
   }
 
   const TABS: [Tab, string][] = [
+    ["platform", "Hosted (platform)"],
     ["init", "Init snippet"],
     ["gtm", "GTM-ready"],
     ["json", "Config JSON"],
